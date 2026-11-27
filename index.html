@@ -24,6 +24,8 @@
   h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.01em; text-wrap: balance; }
   h2 { margin: 0 0 12px; font-size: 17px; font-weight: 600; }
   .lede { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+  .brief { margin: 10px 0 0; padding-left: 18px; color: var(--muted); max-width: 70ch; }
+  .brief li { margin: 4px 0; }
   .lede b { color: var(--fg); font-variant-numeric: tabular-nums; }
   label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
   select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 190px; }
@@ -64,6 +66,7 @@
     <div>
       <h1>QA Weekly Report</h1>
       <p class="lede" id="lede"></p>
+      <ul class="brief" id="brief"></ul>
     </div>
     <label>Week
       <select id="week" aria-label="Week"></select>
@@ -130,6 +133,13 @@
       'For ', el('b', { textContent: weekLabel(w) }), ', ',
       el('b', { textContent: String(withData.size) }), ' of ', el('b', { textContent: String(D.projects.length) }),
       ' projects have recorded activity and ', el('b', { textContent: fmtNum(hours) }), ' hours were logged.');
+  }
+
+  function drawBrief(w) {
+    const brief = $('brief');
+    if (!w.summary || !w.summary.headline) { brief.replaceChildren(); return; }
+    $('lede').textContent = w.summary.headline;
+    brief.replaceChildren(...Object.values(w.summary.people || {}).map((t) => el('li', { textContent: t })));
   }
 
   function drawProjects(w) {
@@ -209,7 +219,7 @@
 
   function show(i) {
     const w = D.weeks[i];
-    drawTiles(w); drawProjects(w); drawPeople(w); drawDetails(w);
+    drawTiles(w); drawBrief(w); drawProjects(w); drawPeople(w); drawDetails(w);
   }
 
   function start() {
