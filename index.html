@@ -26,6 +26,8 @@
   .lede { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
   .brief { margin: 10px 0 0; padding-left: 18px; color: var(--muted); max-width: 70ch; }
   .brief li { margin: 4px 0; }
+  .brief-detail { margin: 6px 0 10px; padding-left: 18px; font-size: 14px; }
+  .brief-detail li { margin: 3px 0; }
   .lede b { color: var(--fg); font-variant-numeric: tabular-nums; }
   label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
   select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 190px; }
@@ -139,7 +141,13 @@
     const brief = $('brief');
     if (!w.summary || !w.summary.headline) { brief.replaceChildren(); return; }
     $('lede').textContent = w.summary.headline;
-    brief.replaceChildren(...Object.values(w.summary.people || {}).map((t) => el('li', { textContent: t })));
+    const details = w.summary.details || {};
+    brief.replaceChildren(...Object.entries(w.summary.people || {}).map(([name, t]) => {
+      const li = el('li', { textContent: t });
+      const lines = details[name] || [];
+      if (lines.length) li.append(el('ul', { className: 'brief-detail' }, ...lines.map((l) => el('li', { textContent: l }))));
+      return li;
+    }));
   }
 
   function drawProjects(w) {
