@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>QA Weekly Report</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --fg: #1c2024; --muted: #5e6670; --line: #e1e3e6;
+    --accent: #1d6fa5; --accent-2: #9db9cf; --ok: #1f7a4d; --warn: #9a6200;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171a; --panel: #1b1f23; --fg: #e8eaec; --muted: #9aa3ad; --line: #2c3238;
+      --accent: #5aa9dd; --accent-2: #2f5873; --ok: #55c08a; --warn: #e0a84a; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-left)) 56px max(16px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 28px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; }
+  h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { margin: 0 0 12px; font-size: 17px; font-weight: 600; }
+  .lede { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+  .lede b { color: var(--fg); font-variant-numeric: tabular-nums; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 190px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .tile .k { font-size: 13px; color: var(--muted); }
+  .tile .v { font-size: 32px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12px; color: var(--muted); }
+  .scroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; font-weight: 500; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td.n, th.n { text-align: right; }
+  td.name { font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; }
+  .pill.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+  .pill.none { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+  .note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .chart { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .chart svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details ul { margin: 8px 0 4px; padding-left: 18px; }
+  details li { margin: 2px 0; overflow-wrap: anywhere; }
+  details .grp { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .empty { color: var(--muted); padding: 24px; text-align: center; background: var(--panel); border: 1px dashed var(--line); border-radius: 10px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  footer { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>QA Weekly Report</h1>
+      <p class="lede" id="lede"></p>
+    </div>
+    <label>Week
+      <select id="week" aria-label="Week"></select>
+    </label>
+  </header>
+
+  <section class="tiles" id="tiles" aria-label="Totals for the week"></section>
+
+  <section>
+    <h2>Projects</h2>
+    <div class="scroll"><table id="projects"></table></div>
+    <p class="note" id="proj-note"></p>
+  </section>
+
+  <section>
+    <h2>People</h2>
+    <div class="scroll"><table id="people"></table></div>
+    <p class="note" id="people-note"></p>
+  </section>
+
+  <section>
+    <h2>Hours by week</h2>
+    <div class="chart">
+      <div class="legend"><span><i style="background:var(--accent)"></i>Testing</span><span><i style="background:var(--accent-2)"></i>Other work</span></div>
+      <div id="trend"></div>
+    </div>
+  </section>
+
+  <section id="details-section" hidden>
+    <h2>What was done</h2>
+    <div id="details"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+  const D = window.QA_DATA || { weeks: [], projects: [], people: [] };
+  const $ = (id) => document.getElementById(id);
+  const fmtNum = (v) => (v == null ? '—' : (Math.round(v * 100) / 100).toLocaleString('en-US'));
+  const fmtDate = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }); };
+  const sum = (rows, key) => { const have = rows.filter((r) => r.metrics && r.metrics[key] != null); return have.length ? have.reduce((a, r) => a + r.metrics[key], 0) : null; };
+  const el = (tag, props, ...kids) => { const e = document.createElement(tag); Object.assign(e, props || {}); kids.flat().forEach((k) => e.append(k)); return e; };
+  const td = (text, cls) => el('td', { textContent: text, className: cls || '' });
+  const th = (text, cls) => el('th', { textContent: text, className: cls || '' });
+  const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : null);
+
+  function weekLabel(w) { return `${fmtDate(w.week_start)} to ${fmtDate(w.week_end)}, ${w.week_end.slice(0, 4)}`; }
+
+  function drawTiles(w) {
+    const hours = sum(w.rows, 'ESS hours'), testing = sum(w.rows, 'Testing hours');
+    const bugs = sum(w.rows, 'Bugs opened'), verified = sum(w.rows, 'Bugs verified');
+    const withData = new Set(w.rows.map((r) => r.project).filter((p) => D.projects.some((x) => x.name === p)));
+    const tiles = [
+      ['Hours logged', fmtNum(hours), 'from ESS'],
+      ['Testing hours', fmtNum(testing), hours ? Math.round((testing / hours) * 100) + '% of hours' : ''],
+      ['Projects with activity', `${withData.size} of ${D.projects.length}`, ''],
+      ['Bugs opened', fmtNum(bugs), bugs == null ? 'needs GitHub connected' : 'from GitHub'],
+      ['Bugs verified', fmtNum(verified), verified == null ? 'needs GitHub connected' : 'from GitHub'],
+    ];
+    $('tiles').replaceChildren(...tiles.map(([k, v, s]) => el('div', { className: 'tile' }, el('span', { className: 'k', textContent: k }), el('span', { className: 'v', textContent: v }), el('span', { className: 's', textContent: s }))));
+    $('lede').replaceChildren(
+      'For ', el('b', { textContent: weekLabel(w) }), ', ',
+      el('b', { textContent: String(withData.size) }), ' of ', el('b', { textContent: String(D.projects.length) }),
+      ' projects have recorded activity and ', el('b', { textContent: fmtNum(hours) }), ' hours were logged.');
+  }
+
+  function drawProjects(w) {
+    const head = el('thead', {}, el('tr', {}, th('Project'), th('Person in charge'), th('Status'), th('Hours', 'n'), th('Testing', 'n'), th('Bugs opened', 'n'), th('Bugs verified', 'n'), th('Reported by')));
+    const body = el('tbody');
+    D.projects.forEach((p) => {
+      const rows = w.rows.filter((r) => r.project === p.name);
+      const tr = el('tr', {}, td(p.name, 'name'), td(p.owner || '—'));
+      const status = el('td', {}, el('span', { className: 'pill ' + (rows.length ? 'ok' : 'none'), textContent: rows.length ? 'Has activity' : 'No data yet' }));
+      tr.append(status, td(fmtNum(sum(rows, 'ESS hours')), 'n'), td(fmtNum(sum(rows, 'Testing hours')), 'n'), td(fmtNum(sum(rows, 'Bugs opened')), 'n'), td(fmtNum(sum(rows, 'Bugs verified')), 'n'),
+        td([...new Set(rows.map((r) => r.person))].join(', ') || '—'));
+      body.append(tr);
+    });
+    $('projects').replaceChildren(head, body);
+    const other = [...new Set(w.rows.map((r) => r.project).filter((p) => !D.projects.some((x) => x.name === p)))];
+    $('proj-note').textContent = other.length ? 'Other projects with activity: ' + other.join(', ') + '.' : '';
+  }
+
+  function drawPeople(w) {
+    const head = el('thead', {}, el('tr', {}, th('Person'), th('Hours', 'n'), th('Testing', 'n'), th('Entries', 'n'), th('Sources')));
+    const body = el('tbody');
+    const missing = [];
+    D.people.forEach((p) => {
+      const rows = w.rows.filter((r) => r.person === p.name);
+      const sources = [...new Set(rows.map((r) => ({ ess: 'ESS', github: 'GitHub' }[r.source] || r.source)))];
+      if (!rows.length) missing.push(p.name);
+      body.append(el('tr', {}, td(p.name, 'name'), td(fmtNum(sum(rows, 'ESS hours')), 'n'), td(fmtNum(sum(rows, 'Testing hours')), 'n'), td(fmtNum(sum(rows, 'ESS entries')), 'n'), td(sources.join(', ') || 'No data yet')));
+    });
+    $('people').replaceChildren(head, body);
+    $('people-note').textContent = missing.length ? 'No data yet for ' + missing.join(', ') + '. Their ESS export or GitHub activity has not been added.' : '';
+  }
+
+  function drawTrend() {
+    const weeks = D.weeks.slice(0, 8).reverse();
+    const box = $('trend');
+    const data = weeks.map((w) => { const h = sum(w.rows, 'ESS hours') || 0, t = sum(w.rows, 'Testing hours') || 0; return { w, t, o: Math.max(0, h - t), h }; });
+    if (!data.some((d) => d.h > 0)) { box.replaceChildren(el('p', { className: 'note', textContent: 'Weekly totals appear once a week has hours.' })); return; }
+    const W = Math.max(300, box.clientWidth || 720), H = 220, m = { t: 14, r: 8, b: 26, l: 36 };
+    const max = Math.max(...data.map((d) => d.h)), top = Math.ceil(max / 10) * 10 || 10;
+    const x = (i) => m.l + (i + 0.5) * ((W - m.l - m.r) / data.length), bw = Math.min(56, ((W - m.l - m.r) / data.length) * 0.6);
+    const y = (v) => H - m.b - (v / top) * (H - m.t - m.b);
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Hours logged per week, split into testing and other work');
+    const add = (tag, attrs, text) => { const n = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v)); if (text != null) n.textContent = text; svg.append(n); return n; };
+    [0, top / 2, top].forEach((v) => { add('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: 'var(--line)' }); add('text', { x: m.l - 6, y: y(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, String(v)); });
+    data.forEach((d, i) => {
+      add('rect', { x: x(i) - bw / 2, y: y(d.t), width: bw, height: Math.max(0, y(0) - y(d.t)), fill: 'var(--accent)', rx: 2 });
+      add('rect', { x: x(i) - bw / 2, y: y(d.t + d.o), width: bw, height: Math.max(0, y(d.t) - y(d.t + d.o)), fill: 'var(--accent-2)', rx: 2 });
+      add('text', { x: x(i), y: y(d.h) - 5, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-size': 11 }, fmtNum(d.h));
+      add('text', { x: x(i), y: H - 8, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, fmtDate(d.w.week_start));
+    });
+    box.replaceChildren(svg);
+  }
+
+  function drawDetails(w) {
+    const sec = $('details-section');
+    if (!D.include_details) { sec.hidden = true; return; }
+    const groups = {};
+    w.rows.forEach((r) => { (groups[r.project] = groups[r.project] || []).push(r); });
+    const names = Object.keys(groups);
+    sec.hidden = !names.length;
+    $('details').replaceChildren(...names.map((name) => {
+      const d = el('details', {}, el('summary', { textContent: name }));
+      groups[name].forEach((r) => {
+        d.append(el('div', { className: 'grp', textContent: `${r.person} (${{ ess: 'ESS', github: 'GitHub' }[r.source] || r.source})` }));
+        const ul = el('ul');
+        (r.items || []).forEach((it) => {
+          const url = safeUrl(it.url);
+          ul.append(el('li', {}, it.heading ? el('b', { textContent: it.text }) : url ? el('a', { href: url, target: '_blank', rel: 'noopener', textContent: it.text }) : it.text));
+        });
+        d.append(ul);
+      });
+      return d;
+    }));
+  }
+
+  function show(i) {
+    const w = D.weeks[i];
+    drawTiles(w); drawProjects(w); drawPeople(w); drawDetails(w);
+  }
+
+  function start() {
+    $('foot').textContent = D.generated ? 'Built automatically from ESS and GitHub on ' + new Date(D.generated).toLocaleString() + '. Nothing here is typed in by hand.' : '';
+    if (!D.weeks.length) {
+      $('lede').textContent = 'No weeks yet. Run the weekly update, then reload.';
+      $('tiles').replaceChildren(el('div', { className: 'empty', textContent: 'No report data has been published yet.' }));
+      return;
+    }
+    D.weeks = D.weeks.slice().sort((a, b) => (a.week_start < b.week_start ? 1 : -1));
+    const sel = $('week');
+    sel.replaceChildren(...D.weeks.map((w, i) => new Option('Week of ' + fmtDate(w.week_start), i)));
+    sel.onchange = () => show(Number(sel.value));
+    drawTrend();
+    show(0);
+    let lastW = $('trend').clientWidth;
+    window.addEventListener('resize', () => { const w = $('trend').clientWidth; if (Math.abs(w - lastW) > 40) { lastW = w; drawTrend(); } });
+  }
+  start();
+</script>
+</body>
+</html>
